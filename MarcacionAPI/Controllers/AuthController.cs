@@ -28,7 +28,8 @@ public record LoginResponseDto(string Token);
 // --- Fin DTOs ---
 
 [ApiController]
-[Route("api/[controller]")]
+//[Route("api/[controller]")]
+[Route("api/auth")]
 public class AuthController : ControllerBase
 {
     private readonly ApplicationDbContext _context;

@@ -1,18 +1,21 @@
-// app/(auth)/login.tsx
-import { login } from '@/src/api/auth';
-import { router } from 'expo-router';
+import { useAuth } from '@/src/auth/AuthContext'; // ✅ Importamos el hook del contexto
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 export default function LoginScreen() {
+  // ✅ Usamos la función login del contexto, que actualiza el estado global
+  const { login } = useAuth(); 
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,117 +28,131 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      console.log('Haciendo login...');
+      console.log('🔄 Iniciando sesión vía Contexto...');
 
-      // Llama al servicio de login (guarda el token dentro de login())
-      const data = await login(email.trim(), password);
-      console.log('LOGIN OK', data);
+      // 👇 AQUÍ ESTÁ LA CLAVE: 
+      // Llamamos al login del contexto. Este se encarga de:
+      // 1. Llamar a la API
+      // 2. Guardar el token
+      // 3. Cargar los datos del usuario (/me)
+      // 4. Actualizar la variable 'token' que vigila el _layout
+      await login(email.trim(), password);
+      
+      console.log('✅ Login exitoso. El _layout redirigirá automáticamente.');
+      
+      // Opcional: Si el _layout tarda un milisegundo, esto fuerza la redirección visualmente
+      // router.replace('/(tabs)'); 
 
-      // Si quieres dejar el alert de éxito mientras pruebas, descomenta esto:
-      // Alert.alert(
-      //   'Login correcto',
-      //   `Token recibido (primeros 10 chars): ${data.token.substring(0, 10)}...`
-      // );
-
-      // Navegar a la pantalla principal (tabs → index.tsx → ruta "/")
-      router.replace('/');
     } catch (err: any) {
-      console.log(
-        'LOGIN ERROR',
-        JSON.stringify(
-          {
-            message: err.message,
-            status: err.response?.status,
-            data: err.response?.data,
-          },
-          null,
-          2
-        )
-      );
-
-      const apiMessage =
-        typeof err.response?.data === 'string'
-          ? err.response?.data
-          : err.response?.data?.message;
-
-      Alert.alert(
-        'Error al iniciar sesión',
-        apiMessage ||
-          err.message ||
-          'No se pudo contactar al servidor. Verifica tu conexión y que la API esté encendida.'
-      );
+      console.log('❌ Error en login:', err);
+      
+      const message = err.message || 'No se pudo iniciar sesión.';
+      Alert.alert('Error al iniciar sesión', message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Iniciar sesión</Text>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <View style={styles.innerContainer}>
+        {/* Puedes agregar tu logo aquí si quieres */}
+        {/* <Image source={require('../../assets/images/logo.png')} style={styles.logo} resizeMode="contain" /> */}
+        
+        <Text style={styles.title}>Iniciar sesión</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Correo electrónico"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Correo electrónico"
+          placeholderTextColor="#999"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Contraseña"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Contraseña"
+          placeholderTextColor="#999"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleLogin}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Entrar</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Entrar</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    justifyContent: 'center',
     backgroundColor: '#f5f5f5',
   },
+  innerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  logo: {
+    width: 150,
+    height: 80,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
   title: {
-    fontSize: 22,
-    fontWeight: '600',
-    marginBottom: 24,
+    fontSize: 26,
+    fontWeight: 'bold',
+    marginBottom: 30,
     textAlign: 'center',
+    color: '#333',
   },
   input: {
     backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 12,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#e0e0e0',
+    fontSize: 16,
+    color: '#333',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   button: {
-    backgroundColor: '#2563eb',
-    borderRadius: 8,
-    paddingVertical: 12,
+    backgroundColor: '#007AFF',
+    borderRadius: 10,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 10,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
   },
   buttonText: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: 'bold',
+    fontSize: 18,
   },
 });

@@ -1,46 +1,33 @@
-// app.config.js
 import 'dotenv/config';
 
 export default ({ config }) => ({
+  // 1. Hereda toda la configuración base que ya definiste en app.json
+  // (nombre, slug, plugins, android package, permisos, etc.)
   ...config,
 
-  name: 'Marcacion',
-  slug: 'marcacion-mobile',
-
-  // Corrige el warning de Linking
-  scheme: 'marcacion',
-
-  // Expo Router: tipado de rutas
-  experiments: {
-    ...(config.experiments ?? {}),
-    typedRoutes: true,
-  },
-
-  // NO incluimos expo-build-properties aquí
-  plugins: [
-    ...(config.plugins ?? []),
-    'expo-router',
-  ],
-
-  // Dev con HTTP (si tu API es http://)
-  android: {
-    ...(config.android ?? {}),
-    //usesCleartextTraffic: true,
-  },
-
+  // 2. Configuración de iOS (Opcional, mantiene lo que tenías)
   ios: {
     ...(config.ios ?? {}),
     infoPlist: {
       ...(config.ios?.infoPlist ?? {}),
+      // Permite conexiones HTTP inseguras (útil para dev, aunque Ngrok usa HTTPS)
       NSAppTransportSecurity: {
-        NSAllowsArbitraryLoads: true, // quítalo si pasas a HTTPS
+        NSAllowsArbitraryLoads: true, 
       },
     },
   },
 
+  // 3. VARIABLES DE ENTORNO (Lo más importante)
   extra: {
+    // Mantenemos cualquier configuración extra que venga del app.json
     ...(config.extra ?? {}),
-    apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://10.15.0.221:5000',
+
+    // ✅ LÓGICA DE CONEXIÓN:
+    // Intenta leer la variable de Ngrok desde el archivo .env
+    // Si no la encuentra, usa tu IP local como respaldo.
+    apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.100:5000',
+
+    // Mantiene la configuración de EAS (Project ID)
     eas: {
       ...((config.extra && config.extra.eas) ?? {}),
     },
